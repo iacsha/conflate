@@ -21,7 +21,7 @@ Requirements: Python 3.10+, Windows
 
     git clone https://github.com/yourname/conflate
     cd conflate
-    build.bat   # run from plain CMD, not Anaconda Prompt
+    build.bat   
 
 ## Tech stack
 Python · customtkinter · pandas · RapidFuzz · scikit-learn · PyInstaller
