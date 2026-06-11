@@ -216,3 +216,12 @@ __pycache__/
 Dedupe_Scan_*.xlsx
 Master_Scan_*.xlsx
 Final_*.xlsx
+Writeback_*.xlsx
+SQL_Updates_*.sql
+
+# Local staging area for stale files pending deletion — not for the repo
+archive/
+
+# Track build specs (override the generic *.spec rule above)
+!Conflate.spec
+!Conflate_folder.spec
