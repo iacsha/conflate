@@ -1,5 +1,13 @@
 # Changelog
 
+## Unreleased
+
+### Security
+- Output spreadsheets are hardened against formula (CSV) injection: any cell value starting with `=`, `+`, `-`, `@`, tab, or carriage return is prefixed with an apostrophe so it is treated as text. Applies to the Decisions, Flagged, Clusters, Raw-scan, and Write-back files.
+- SQL UPDATE generation now escapes string values (NUL stripped, single quotes doubled) and validates table/column identifiers against injection. The generated file header documents the assumed ANSI / T-SQL dialect and the MySQL/MariaDB backslash caveat.
+- New per-column **Sensitive** tag: values from tagged columns are masked as `[REDACTED]` in `Conflate.log`. Output files still contain the real values.
+- The open-folder action no longer builds a shell command string.
+
 ## v1.0 (2026-06-11)
 
 First public release of Conflate, a fuzzy-match deduplication and master mapping tool for Excel and CSV data.

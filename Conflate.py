@@ -75,6 +75,40 @@ def ts() -> str:
 
 
 # ===========================================================
+# OUTPUT SAFETY HELPERS
+# ===========================================================
+# Cells beginning with one of these are interpreted as a formula by Excel /
+# LibreOffice / Google Sheets. Prefixing them with an apostrophe forces the
+# value to be treated as text (CSV / formula-injection mitigation).
+_FORMULA_TRIGGERS = ("=", "+", "-", "@", "\t", "\r")
+
+def sanitize_cell(value):
+    """Neutralise spreadsheet formula injection in a single output cell."""
+    if isinstance(value, str) and value[:1] in _FORMULA_TRIGGERS:
+        return "'" + value
+    return value
+
+def sanitize_df(df):
+    """Return a copy of df with every string cell made formula-safe."""
+    if df is None or getattr(df, "empty", True):
+        return df
+    out = df.copy()
+    for col in out.columns:
+        out[col] = out[col].map(sanitize_cell)
+    return out
+
+def sql_escape_value(value):
+    """Escape a string for an ANSI / T-SQL single-quoted literal."""
+    return str(value).replace("\x00", "").replace("'", "''")
+
+_SQL_IDENT_RE = re.compile(r'[^\w.\[\]"]')
+
+def sql_escape_ident(name):
+    """Strip characters not valid in a table/column identifier (anti-injection)."""
+    return _SQL_IDENT_RE.sub("", str(name))
+
+
+# ===========================================================
 # IN-APP LOG VIEWER
 # ===========================================================
 class LogViewerWindow(ctk.CTkToplevel):
@@ -124,14 +158,13 @@ class LogViewerWindow(ctk.CTkToplevel):
         self.textbox.see("end")  # scroll to bottom (most recent)
 
     def _open_folder(self):
-        import subprocess
         folder = os.path.dirname(self.log_path)
         if sys.platform == "win32":
-            subprocess.Popen(f'explorer "{folder}"')
-        elif sys.platform == "darwin":
-            subprocess.Popen(["open", folder])
+            os.startfile(folder)            # no shell string, no injection surface
         else:
-            subprocess.Popen(["xdg-open", folder])
+            import subprocess
+            opener = "open" if sys.platform == "darwin" else "xdg-open"
+            subprocess.Popen([opener, folder])
 
 
 # ===========================================================
@@ -308,6 +341,9 @@ class DataMatchApp(ctk.CTk):
         self._note_has_focus  = False
         self.canonical_registry  = {}
         self.structured_code_cols = set()  # cols where digit sequence must match exactly
+        self.sensitive_cols   = set()  # cols whose values are masked in the log file
+        self._sensitive_a     = False  # primary side has a sensitive search column
+        self._sensitive_b     = False  # match side has a sensitive search column
 
         # --- KEY BINDINGS ---
         self.bind("<Left>",      lambda e: self._safe_key_decision("A"))
@@ -737,6 +773,30 @@ class DataMatchApp(ctk.CTk):
                 if col in self.structured_code_cols:
                     btn.configure(fg_color="#4a6fa5", text_color="white")
 
+            # "Sensitive" tag - available on any column; masks this column's
+            # values in the log file (data is still written to output files).
+            sens_holder = [None]
+            def _make_sens_toggle(c, holder):
+                def _toggle():
+                    if c in self.sensitive_cols:
+                        self.sensitive_cols.discard(c)
+                        holder[0].configure(fg_color="transparent",
+                                            text_color="gray", border_width=1)
+                    else:
+                        self.sensitive_cols.add(c)
+                        holder[0].configure(fg_color="#8a5a00", text_color="white")
+                return _toggle
+            sens_btn = ctk.CTkButton(
+                row, text="Sensitive", width=80, height=22,
+                fg_color="transparent", text_color="gray",
+                border_width=1, border_color="gray",
+                font=ctk.CTkFont(size=11),
+                command=lambda c=col, h=sens_holder: _make_sens_toggle(c, h)())
+            sens_btn.pack(side="left", padx=2)
+            sens_holder[0] = sens_btn
+            if col in self.sensitive_cols:
+                sens_btn.configure(fg_color="#8a5a00", text_color="white")
+
         opts = ["- none -"] + columns
         if is_master:
             self.combo_master_id.configure(values=opts)
@@ -829,7 +889,9 @@ class DataMatchApp(ctk.CTk):
         # Suppress pairs where structured-code columns have different digit sequences
         if self._should_suppress_code_mismatch(row_a, row_b):
             logging.debug(
-                f"Code suppressed: '{item_a_cleaned}' vs '{item_b_cleaned}'")
+                f"Code suppressed: "
+                f"'{('[REDACTED]' if self._sensitive_a else item_a_cleaned)}' vs "
+                f"'{('[REDACTED]' if self._sensitive_b else item_b_cleaned)}'")
             return
 
         val_a  = " | ".join(str(row_a.get(c, "")) for c in self.target_cols)
@@ -1003,6 +1065,11 @@ class DataMatchApp(ctk.CTk):
             else:
                 return
 
+        # Determine whether either side carries sensitive columns (masks logs)
+        cols_b = self.target_cols_master if self.is_master_mode else self.target_cols
+        self._sensitive_a = any(c in self.sensitive_cols for c in self.target_cols)
+        self._sensitive_b = any(c in self.sensitive_cols for c in cols_b)
+
         # Capture settings for crash context
         self._scan_settings = {
             "file":         self.file_path,
@@ -1014,6 +1081,7 @@ class DataMatchApp(ctk.CTk):
             "test_mode":    self.var_test_mode.get(),
             "primary_cols": self.target_cols,
             "master_cols":  self.target_cols_master if self.is_master_mode else [],
+            "sensitive_cols": sorted(self.sensitive_cols),
         }
         logging.info(f"Scan settings: {json.dumps(self._scan_settings, default=str)}")
 
@@ -1128,7 +1196,7 @@ class DataMatchApp(ctk.CTk):
                 row[f"B_{k}"] = v
             rows.append(row)
         try:
-            pd.DataFrame(rows).to_excel(out_path, index=False)
+            sanitize_df(pd.DataFrame(rows)).to_excel(out_path, index=False)
             logging.info(f"Raw match export saved: {out_path}")
             self._raw_export_path = out_path
         except Exception as e:
@@ -1304,6 +1372,11 @@ class DataMatchApp(ctk.CTk):
         id_b_label = "Master_ID" if self.is_master_mode else "Duplicate_ID"
         note    = self.entry_note.get().strip()
 
+        # Masked copies for the log file when a sensitive column is involved
+        log_a    = "[REDACTED]" if self._sensitive_a else match["Match_A"]
+        log_b    = "[REDACTED]" if self._sensitive_b else match["Match_B"]
+        log_note = "[REDACTED]" if (self._sensitive_a or self._sensitive_b) else note
+
         base = {
             "Primary_ID":    id_a,
             id_b_label:      id_b,
@@ -1327,7 +1400,7 @@ class DataMatchApp(ctk.CTk):
             logging.info(
                 f"DECISION [Retain Left] #{self.current_index+1} | "
                 f"Score={match['Score']} | "
-                f"A='{match['Match_A']}' | B='{match['Match_B']}' | Note='{note}'")
+                f"A='{log_a}' | B='{log_b}' | Note='{log_note}'")
 
         elif choice == "B":
             final  = match["Match_B"]
@@ -1341,7 +1414,7 @@ class DataMatchApp(ctk.CTk):
             logging.info(
                 f"DECISION [Retain Right] #{self.current_index+1} | "
                 f"Score={match['Score']} | "
-                f"A='{match['Match_A']}' | B='{match['Match_B']}' | Note='{note}'")
+                f"A='{log_a}' | B='{log_b}' | Note='{log_note}'")
 
         elif choice == "C":
             final = self._current_canonical
@@ -1353,8 +1426,8 @@ class DataMatchApp(ctk.CTk):
             self._check_chain_update(final, {match["Match_A"], match["Match_B"]})
             logging.info(
                 f"DECISION [Canonical] #{self.current_index+1} | "
-                f"Canon='{final}' | "
-                f"A='{match['Match_A']}' | B='{match['Match_B']}' | Note='{note}'")
+                f"Canon='{('[REDACTED]' if (self._sensitive_a or self._sensitive_b) else final)}' | "
+                f"A='{log_a}' | B='{log_b}' | Note='{log_note}'")
 
         elif choice == "F":
             self.flagged_merges.append(
@@ -1362,13 +1435,13 @@ class DataMatchApp(ctk.CTk):
             logging.info(
                 f"DECISION [Flag] #{self.current_index+1} | "
                 f"Score={match['Score']} | "
-                f"A='{match['Match_A']}' | B='{match['Match_B']}' | Note='{note}'")
+                f"A='{log_a}' | B='{log_b}' | Note='{log_note}'")
 
         elif choice == "S":
             self.skipped_count += 1
             logging.debug(
                 f"DECISION [Skip] #{self.current_index+1} | "
-                f"A='{match['Match_A']}' | B='{match['Match_B']}'")
+                f"A='{log_a}' | B='{log_b}'")
 
         self.decision_history.append(choice)
         self.current_index += 1
@@ -1418,6 +1491,9 @@ class DataMatchApp(ctk.CTk):
             "raw_export_path":      self._raw_export_path,
             "canonical_registry":   self.canonical_registry,
             "structured_code_cols": list(self.structured_code_cols),
+            "sensitive_cols":       list(self.sensitive_cols),
+            "sensitive_a":          self._sensitive_a,
+            "sensitive_b":          self._sensitive_b,
         }
         try:
             with open(self.progress_file, "w") as f:
@@ -1441,6 +1517,9 @@ class DataMatchApp(ctk.CTk):
         self._raw_export_path     = data.get("raw_export_path")
         self.canonical_registry   = data.get("canonical_registry", {})
         self.structured_code_cols = set(data.get("structured_code_cols", []))
+        self.sensitive_cols       = set(data.get("sensitive_cols", []))
+        self._sensitive_a         = data.get("sensitive_a", False)
+        self._sensitive_b         = data.get("sensitive_b", False)
         logging.info(f"Progress resumed: index={self.current_index}, "
                      f"approved={len(self.approved_merges)}, "
                      f"flagged={len(self.flagged_merges)}")
@@ -1660,13 +1739,21 @@ class DataMatchApp(ctk.CTk):
         if not self.approved_merges or not col_pairs:
             return None
 
+        table_ident = sql_escape_ident(table)
+        id_ident    = sql_escape_ident(id_col) if id_col else ""
+
         lines = [
             f"-- Conflate v{VERSION} - SQL UPDATE statements",
             f"-- Source file : {os.path.basename(self.file_path)}",
             f"-- Generated   : {datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')}",
-            f"-- Table       : {table}",
-            f"-- SET columns : {', '.join(db for db, _ in col_pairs)}",
-            f"-- WHERE col   : {id_col or '(matched on original name)'}",
+            f"-- Table       : {table_ident}",
+            f"-- SET columns : {', '.join(sql_escape_ident(db) for db, _ in col_pairs)}",
+            f"-- WHERE col   : {id_ident or '(matched on original name)'}",
+            "--",
+            "-- Escaping: string values are escaped for ANSI SQL / T-SQL (single",
+            "-- quotes doubled). On MySQL/MariaDB, run with sql_mode including",
+            "-- NO_BACKSLASH_ESCAPES (or ANSI mode) so backslashes in data are not",
+            "-- treated as escape characters. Review before running on production.",
             "",
         ]
 
@@ -1686,7 +1773,7 @@ class DataMatchApp(ctk.CTk):
                         any_changed = True
                 else:
                     val = str(row_a.get(source, ""))
-                set_parts.append(f"{db_col} = '{val.replace(chr(39), chr(39)*2)}'")
+                set_parts.append(f"{sql_escape_ident(db_col)} = '{sql_escape_value(val)}'")
 
             # Only emit if at least one SET value differs from original
             if not any_changed:
@@ -1695,20 +1782,20 @@ class DataMatchApp(ctk.CTk):
             set_clause = ",\n       ".join(set_parts)
             row_id = dec.get("Primary_ID", "")
 
-            if row_id and id_col:
-                id_val = str(row_id).replace("'", "''")
+            if row_id and id_ident:
+                id_val = sql_escape_value(row_id)
                 lines.append(
-                    f"UPDATE {table}\n"
+                    f"UPDATE {table_ident}\n"
                     f"   SET {set_clause}\n"
-                    f" WHERE {id_col} = '{id_val}';  "
-                    f"-- was: '{original.replace(chr(39), chr(39)*2)}'"
+                    f" WHERE {id_ident} = '{id_val}';  "
+                    f"-- was: '{sql_escape_value(original)}'"
                 )
             else:
-                orig_esc = original.replace("'", "''")
+                orig_esc = sql_escape_value(original)
                 # Use the first SET column as the fallback WHERE target
-                first_db = col_pairs[0][0]
+                first_db = sql_escape_ident(col_pairs[0][0])
                 lines.append(
-                    f"UPDATE {table}\n"
+                    f"UPDATE {table_ident}\n"
                     f"   SET {set_clause}\n"
                     f" WHERE {first_db} = '{orig_esc}';  "
                     f"-- score: {dec.get('Score', '')}%"
@@ -1753,11 +1840,11 @@ class DataMatchApp(ctk.CTk):
             out_path = os.path.join(out_dir, f"Final_{prefix}_{stem}_{ts()}.xlsx")
             with pd.ExcelWriter(out_path, engine="openpyxl") as writer:
                 if not approved_df.empty:
-                    approved_df.to_excel(writer, sheet_name="Decisions", index=False)
+                    sanitize_df(approved_df).to_excel(writer, sheet_name="Decisions", index=False)
                 if not flagged_df.empty:
-                    flagged_df.to_excel(writer, sheet_name="Flagged for Review", index=False)
+                    sanitize_df(flagged_df).to_excel(writer, sheet_name="Flagged for Review", index=False)
                 if not cluster_df.empty:
-                    cluster_df.to_excel(writer, sheet_name="Clusters", index=False)
+                    sanitize_df(cluster_df).to_excel(writer, sheet_name="Clusters", index=False)
             files_saved.append(f"Decisions file:\n  {out_path}")
             logging.info(f"Output saved: {out_path}")
 
@@ -1779,7 +1866,7 @@ class DataMatchApp(ctk.CTk):
                         break  # apply from first matched col
                 wb_path = os.path.join(
                     out_dir, f"Writeback_{stem}_{ts()}.xlsx")
-                df_orig.to_excel(wb_path, index=False)
+                sanitize_df(df_orig).to_excel(wb_path, index=False)
                 files_saved.append(f"Write-back file:\n  {wb_path}")
                 logging.info(f"Write-back saved: {wb_path}")
             except Exception as e:
