@@ -29,7 +29,7 @@ from logging.handlers import RotatingFileHandler
 # ===========================================================
 VERSION      = "1.0"
 APP_NAME     = "Conflate"
-APP_TITLE    = f"{APP_NAME} v{VERSION} — Data Deduplication & Master Mapper"
+APP_TITLE    = f"{APP_NAME} v{VERSION} - Data Deduplication & Master Mapper"
 SCRIPT_DIR   = os.path.dirname(os.path.abspath(__file__))
 LOG_PATH     = os.path.join(SCRIPT_DIR, f"{APP_NAME}.log")
 
@@ -61,7 +61,7 @@ def handle_exception(exc_type, exc_value, exc_traceback):
 
 sys.excepthook = handle_exception
 logging.info(f"{'='*60}")
-logging.info(f"  {APP_NAME} v{VERSION} — SESSION STARTED")
+logging.info(f"  {APP_NAME} v{VERSION} - SESSION STARTED")
 logging.info(f"  Log file: {LOG_PATH}")
 logging.info(f"{'='*60}")
 
@@ -80,7 +80,7 @@ def ts() -> str:
 class LogViewerWindow(ctk.CTkToplevel):
     def __init__(self, parent):
         super().__init__(parent)
-        self.title(f"{APP_NAME} — Log Viewer")
+        self.title(f"{APP_NAME} - Log Viewer")
         self.geometry("900x600")
         self.log_path = LOG_PATH
 
@@ -139,8 +139,8 @@ class LogViewerWindow(ctk.CTkToplevel):
 # ===========================================================
 class HistogramWindow(ctk.CTkToplevel):
     BUCKET_COLORS = {
-        "50–60": "#cc3333", "60–70": "#cc6633", "70–80": "#ccaa33",
-        "80–90": "#88aa33", "90–100": "#33aa33", "100": "#00cc88",
+        "50-60": "#cc3333", "60-70": "#cc6633", "70-80": "#ccaa33",
+        "80-90": "#88aa33", "90-100": "#33aa33", "100": "#00cc88",
     }
 
     def __init__(self, parent, matches, on_proceed):
@@ -156,16 +156,16 @@ class HistogramWindow(ctk.CTkToplevel):
         ctk.CTkLabel(self, text=f"Total matches found: {len(matches):,}",
                      text_color="gray").pack()
 
-        buckets = {"50–60": 0, "60–70": 0, "70–80": 0,
-                   "80–90": 0, "90–100": 0, "100": 0}
+        buckets = {"50-60": 0, "60-70": 0, "70-80": 0,
+                   "80-90": 0, "90-100": 0, "100": 0}
         for m in matches:
             s = m["Score"]
             if s >= 100:        buckets["100"]    += 1
-            elif s >= 90:       buckets["90–100"] += 1
-            elif s >= 80:       buckets["80–90"]  += 1
-            elif s >= 70:       buckets["70–80"]  += 1
-            elif s >= 60:       buckets["60–70"]  += 1
-            else:               buckets["50–60"]  += 1
+            elif s >= 90:       buckets["90-100"] += 1
+            elif s >= 80:       buckets["80-90"]  += 1
+            elif s >= 70:       buckets["70-80"]  += 1
+            elif s >= 60:       buckets["60-70"]  += 1
+            else:               buckets["50-60"]  += 1
 
         max_count  = max(buckets.values()) or 1
         canvas     = tk.Canvas(self, height=270, bg="#2b2b2b", highlightthickness=0)
@@ -217,7 +217,7 @@ class ColumnMappingWidget(ctk.CTkFrame):
         header.pack(fill="x", padx=5, pady=(5, 0))
         ctk.CTkLabel(
             header,
-            text="3b. Column Mappings — Primary → Master  (many-to-many supported):",
+            text="3b. Column Mappings - Primary → Master  (many-to-many supported):",
             font=ctk.CTkFont(weight="bold")
         ).pack(side="left")
         ctk.CTkButton(header, text="+ Add Pair", width=100,
@@ -326,7 +326,7 @@ class DataMatchApp(ctk.CTk):
         self._build_review_ui()
 
     # =========================================================
-    # UI — SETUP SCREEN
+    # UI - SETUP SCREEN
     # =========================================================
     def _build_setup_ui(self):
         self.setup_frame = ctk.CTkFrame(self)
@@ -336,7 +336,7 @@ class DataMatchApp(ctk.CTk):
         title_row = ctk.CTkFrame(self.setup_frame, fg_color="transparent")
         title_row.pack(fill="x", padx=10, pady=(10, 0))
         ctk.CTkLabel(
-            title_row, text=f"{APP_NAME} — Data Deduplication & Master Mapper",
+            title_row, text=f"{APP_NAME} - Data Deduplication & Master Mapper",
             font=ctk.CTkFont(size=22, weight="bold")
         ).pack(side="left")
         ctk.CTkButton(
@@ -393,10 +393,10 @@ class DataMatchApp(ctk.CTk):
                      font=ctk.CTkFont(weight="bold")).pack(pady=(5, 0))
         self.engine_var = ctk.StringVar(value="RapidFuzz")
         ctk.CTkRadioButton(engine_frame,
-                           text="Standard (RapidFuzz) — Best for < 10,000 rows",
+                           text="Standard (RapidFuzz) - Best for < 10,000 rows",
                            variable=self.engine_var, value="RapidFuzz").pack(pady=5)
         ctk.CTkRadioButton(engine_frame,
-                           text="Heavy Duty (TF-IDF) — Best for > 10,000 rows",
+                           text="Heavy Duty (TF-IDF) - Best for > 10,000 rows",
                            variable=self.engine_var, value="TFIDF").pack(pady=(0, 10))
 
         # --- Column selectors ---
@@ -435,21 +435,21 @@ class DataMatchApp(ctk.CTk):
         ctk.CTkLabel(id_section, text="Primary File ID:").grid(
             row=1, column=0, padx=(20, 5), sticky="e")
         self.combo_primary_id = ctk.CTkOptionMenu(
-            id_section, values=["— none —"], width=220,
+            id_section, values=["- none -"], width=220,
             command=lambda v: setattr(self, "primary_id_col",
-                                      "" if v == "— none —" else v)
+                                      "" if v == "- none -" else v)
         )
-        self.combo_primary_id.set("— none —")
+        self.combo_primary_id.set("- none -")
         self.combo_primary_id.grid(row=1, column=1, padx=(0, 20), pady=4, sticky="w")
 
         ctk.CTkLabel(id_section, text="Master File ID:").grid(
             row=2, column=0, padx=(20, 5), sticky="e")
         self.combo_master_id = ctk.CTkOptionMenu(
-            id_section, values=["— none —"], width=220,
+            id_section, values=["- none -"], width=220,
             command=lambda v: setattr(self, "master_id_col",
-                                      "" if v == "— none —" else v)
+                                      "" if v == "- none -" else v)
         )
-        self.combo_master_id.set("— none —")
+        self.combo_master_id.set("- none -")
         self.combo_master_id.grid(row=2, column=1, padx=(0, 20), pady=(4, 8), sticky="w")
 
         ctk.CTkLabel(
@@ -486,7 +486,7 @@ class DataMatchApp(ctk.CTk):
                                          text_color="gray", font=ctk.CTkFont(size=12))
 
     # =========================================================
-    # UI — REVIEW SCREEN
+    # UI - REVIEW SCREEN
     # =========================================================
     def _build_review_ui(self):
         self.review_frame = ctk.CTkFrame(self)
@@ -497,7 +497,7 @@ class DataMatchApp(ctk.CTk):
         self.lbl_progress.pack(pady=8)
 
         self.lbl_score = ctk.CTkLabel(
-            self.review_frame, text="Match Score: —",
+            self.review_frame, text="Match Score: -",
             text_color="orange", font=ctk.CTkFont(size=16, weight="bold"))
         self.lbl_score.pack(pady=4)
 
@@ -516,7 +516,7 @@ class DataMatchApp(ctk.CTk):
         self.lbl_stat_flagged   = ctk.CTkLabel(stats_frame, text="0", text_color="#ffaa00")
         self.lbl_stat_skipped   = ctk.CTkLabel(stats_frame, text="0", text_color="gray")
         self.lbl_stat_remaining = ctk.CTkLabel(stats_frame, text="0", text_color="orange")
-        self.lbl_stat_time      = ctk.CTkLabel(stats_frame, text="–",  text_color="lightblue")
+        self.lbl_stat_time      = ctk.CTkLabel(stats_frame, text="-",  text_color="lightblue")
 
         for col, lbl in enumerate([self.lbl_stat_approved, self.lbl_stat_flagged,
                                     self.lbl_stat_skipped, self.lbl_stat_remaining,
@@ -539,7 +539,7 @@ class DataMatchApp(ctk.CTk):
         # --- Canonical suggestion banner (hidden until a match is found) ---
         self.canonical_frame = ctk.CTkFrame(
             self.review_frame, fg_color="#2a3d00", corner_radius=8)
-        # Not packed yet — shown dynamically in load_current_match
+        # Not packed yet - shown dynamically in load_current_match
 
         banner_inner = ctk.CTkFrame(self.canonical_frame, fg_color="transparent")
         banner_inner.pack(fill="x", padx=12, pady=8)
@@ -601,7 +601,7 @@ class DataMatchApp(ctk.CTk):
         # --- Notes field ---
         note_frame = ctk.CTkFrame(self.review_frame, fg_color="transparent")
         note_frame.pack(fill="x", padx=20, pady=(4, 0))
-        ctk.CTkLabel(note_frame, text="Decision Note — optional, saved with output  (hotkeys pause while typing):",
+        ctk.CTkLabel(note_frame, text="Decision Note - optional, saved with output  (hotkeys pause while typing):",
                      font=ctk.CTkFont(weight="bold")).pack(anchor="w")
         self.entry_note = ctk.CTkEntry(note_frame, placeholder_text="e.g. 'Vendor confirmed same supplier'",
                                        width=850)
@@ -699,7 +699,7 @@ class DataMatchApp(ctk.CTk):
                             width=200).pack(side="left", padx=(6, 4))
             d[col] = var
 
-            # "Code" tag — only on primary columns (structured code suppression
+            # "Code" tag - only on primary columns (structured code suppression
             # applies to the primary side; master cols follow the same logic)
             if not is_master:
                 code_var = ctk.BooleanVar(
@@ -737,14 +737,14 @@ class DataMatchApp(ctk.CTk):
                 if col in self.structured_code_cols:
                     btn.configure(fg_color="#4a6fa5", text_color="white")
 
-        opts = ["— none —"] + columns
+        opts = ["- none -"] + columns
         if is_master:
             self.combo_master_id.configure(values=opts)
-            self.combo_master_id.set("— none —")
+            self.combo_master_id.set("- none -")
             self.master_id_col = ""
         else:
             self.combo_primary_id.configure(values=opts)
-            self.combo_primary_id.set("— none —")
+            self.combo_primary_id.set("- none -")
             self.primary_id_col = ""
 
     def _refresh_mapping_section(self):
@@ -877,7 +877,7 @@ class DataMatchApp(ctk.CTk):
                      f"in {elapsed:.1f}s ({elapsed/max(total,1)*1000:.1f}ms/item)")
 
     # =========================================================
-    # ENGINE: TF-IDF  (sklearn — best for > 10,000 rows)
+    # ENGINE: TF-IDF  (sklearn - best for > 10,000 rows)
     # =========================================================
     def _run_tfidf(self, unique_primary, unique_master, score_cutoff, max_limit):
         score_decimal = score_cutoff / 100.0
@@ -904,7 +904,7 @@ class DataMatchApp(ctk.CTk):
                 end_row = min(start_row + batch_size, n_rows)
                 t0 = time.perf_counter()
                 self.status_label.configure(
-                    text=f"TF-IDF Batch {start_row:,}–{end_row:,} of {n_rows:,}…")
+                    text=f"TF-IDF Batch {start_row:,}-{end_row:,} of {n_rows:,}…")
                 self.progress_bar.set(start_row / n_rows)
                 self.update()
 
@@ -918,7 +918,7 @@ class DataMatchApp(ctk.CTk):
                     for s, j in hits[:max_limit]:
                         self._add_match(unique_primary[start_row + local_i],
                                         unique_master[j], s * 100)
-                logging.debug(f"Batch {start_row}–{end_row} in {time.perf_counter()-t0:.2f}s")
+                logging.debug(f"Batch {start_row}-{end_row} in {time.perf_counter()-t0:.2f}s")
 
         else:
             logging.info("TF-IDF Dedupe Mode: fitting & transforming…")
@@ -934,7 +934,7 @@ class DataMatchApp(ctk.CTk):
                 end_row = min(start_row + batch_size, n_rows)
                 t0 = time.perf_counter()
                 self.status_label.configure(
-                    text=f"TF-IDF Batch {start_row:,}–{end_row:,} of {n_rows:,}…")
+                    text=f"TF-IDF Batch {start_row:,}-{end_row:,} of {n_rows:,}…")
                 self.progress_bar.set(start_row / n_rows)
                 self.update()
 
@@ -951,7 +951,7 @@ class DataMatchApp(ctk.CTk):
                     for s, col_idx in hits[:max_limit]:
                         self._add_match(unique_primary[start_row + local_i],
                                         unique_primary[col_idx], s * 100)
-                logging.debug(f"Batch {start_row}–{end_row} in {time.perf_counter()-t0:.2f}s")
+                logging.debug(f"Batch {start_row}-{end_row} in {time.perf_counter()-t0:.2f}s")
 
         elapsed = time.perf_counter() - t_engine
         logging.info(f"TF-IDF complete: {len(self.matches):,} matches in {elapsed:.1f}s")
@@ -1172,7 +1172,7 @@ class DataMatchApp(ctk.CTk):
                 self.lbl_stat_time.configure(
                     text=f"{int(est_secs // 60)}m {int(est_secs % 60)}s")
         else:
-            self.lbl_stat_time.configure(text="–")
+            self.lbl_stat_time.configure(text="-")
 
     def load_current_match(self):
         if self.current_index >= len(self.matches):
@@ -1229,8 +1229,8 @@ class DataMatchApp(ctk.CTk):
         if self.col_mappings:
             context += "\n\n--- COLUMN-PAIR COMPARISON ---\n"
             for p_col, m_col in self.col_mappings:
-                val_a      = row_a.get(p_col, "—")
-                val_b      = row_b.get(m_col, "—")
+                val_a      = row_a.get(p_col, "-")
+                val_b      = row_b.get(m_col, "-")
                 pair_score = fuzz.token_sort_ratio(str(val_a), str(val_b))
                 context += (f"  {p_col} → {m_col}:  "
                             f"'{val_a}'  vs  '{val_b}'  [{pair_score}%]\n")
@@ -1250,7 +1250,7 @@ class DataMatchApp(ctk.CTk):
     def _check_chain_update(self, new_canonical, old_values):
         """
         After a decision, check whether any earlier approved decision
-        used one of `old_values` as its Final Selection — meaning that
+        used one of `old_values` as its Final Selection - meaning that
         decision is now stale and should point to `new_canonical` instead.
 
         Prompts the user and updates approved_merges in-place if confirmed.
@@ -1292,7 +1292,7 @@ class DataMatchApp(ctk.CTk):
         if self.current_index >= len(self.matches):
             return
 
-        # "C" = Use Canonical — only valid when a suggestion is showing
+        # "C" = Use Canonical - only valid when a suggestion is showing
         if choice == "C" and not getattr(self, "_current_canonical", None):
             return
 
@@ -1322,7 +1322,7 @@ class DataMatchApp(ctk.CTk):
                 {**base, "Final Selection": final, "Action": "Retained Left"})
             self.canonical_registry[_clean(match["Match_A"])] = final
             self.canonical_registry[_clean(match["Match_B"])] = final
-            # Match_B is being superseded by Match_A — check chain
+            # Match_B is being superseded by Match_A - check chain
             self._check_chain_update(final, {match["Match_B"]})
             logging.info(
                 f"DECISION [Retain Left] #{self.current_index+1} | "
@@ -1336,7 +1336,7 @@ class DataMatchApp(ctk.CTk):
                 {**base, "Final Selection": final, "Action": action})
             self.canonical_registry[_clean(match["Match_A"])] = final
             self.canonical_registry[_clean(match["Match_B"])] = final
-            # Match_A is being superseded by Match_B — check chain
+            # Match_A is being superseded by Match_B - check chain
             self._check_chain_update(final, {match["Match_A"]})
             logging.info(
                 f"DECISION [Retain Right] #{self.current_index+1} | "
@@ -1349,7 +1349,7 @@ class DataMatchApp(ctk.CTk):
                 {**base, "Final Selection": final, "Action": "Applied Canonical"})
             self.canonical_registry[_clean(match["Match_A"])] = final
             self.canonical_registry[_clean(match["Match_B"])] = final
-            # Both sides superseded by existing canonical — check chain
+            # Both sides superseded by existing canonical - check chain
             self._check_chain_update(final, {match["Match_A"], match["Match_B"]})
             logging.info(
                 f"DECISION [Canonical] #{self.current_index+1} | "
@@ -1475,7 +1475,7 @@ class DataMatchApp(ctk.CTk):
         frame_map = ctk.CTkFrame(dialog)
         frame_map.pack(fill="x", padx=20, pady=5)
         var_mapping = ctk.BooleanVar(value=True)
-        ctk.CTkCheckBox(frame_map, text="Decisions file  (Excel — Decisions + Flagged sheets + Clusters)",
+        ctk.CTkCheckBox(frame_map, text="Decisions file  (Excel - Decisions + Flagged sheets + Clusters)",
                         variable=var_mapping,
                         font=ctk.CTkFont(weight="bold")).pack(anchor="w", padx=12, pady=8)
 
@@ -1497,7 +1497,7 @@ class DataMatchApp(ctk.CTk):
                         variable=var_sql,
                         font=ctk.CTkFont(weight="bold")).pack(anchor="w", padx=12, pady=(8, 4))
 
-        # SQL config — always visible, clearly labelled
+        # SQL config - always visible, clearly labelled
         sql_config = ctk.CTkScrollableFrame(frame_sql, height=190, fg_color="transparent")
         sql_config.pack(fill="x", padx=12, pady=(0, 8))
 
@@ -1512,7 +1512,7 @@ class DataMatchApp(ctk.CTk):
         row1 = ctk.CTkFrame(sql_config, fg_color="transparent")
         row1.pack(fill="x", pady=3)
         ctk.CTkLabel(row1, text="WHERE column:", width=110, anchor="w").pack(side="left", padx=(0, 6))
-        id_opts    = ["— use Primary ID col —"] + list(self.checkbox_vars.keys())
+        id_opts    = ["- use Primary ID col -"] + list(self.checkbox_vars.keys())
         var_id_col = ctk.StringVar(value=id_opts[0])
         ctk.CTkOptionMenu(row1, values=id_opts, variable=var_id_col,
                           width=260).pack(side="left")
@@ -1591,7 +1591,7 @@ class DataMatchApp(ctk.CTk):
             result["id_col"]    = (self.primary_id_col
                                    if var_id_col.get() == id_opts[0]
                                    else var_id_col.get())
-            # Collect column pairs — db_col: source
+            # Collect column pairs - db_col: source
             result["col_pairs"] = [
                 (db.get().strip(), src.get())
                 for db, src, _ in col_pairs
@@ -1642,7 +1642,7 @@ class DataMatchApp(ctk.CTk):
             others = sorted(v for v in variants if v != canonical)
             rows.append({
                 "Canonical Value":  canonical,
-                "Absorbed Variants": "\n".join(others) if others else "—",
+                "Absorbed Variants": "\n".join(others) if others else "-",
                 "Variant Count":    len(others),
             })
 
@@ -1661,7 +1661,7 @@ class DataMatchApp(ctk.CTk):
             return None
 
         lines = [
-            f"-- Conflate v{VERSION} — SQL UPDATE statements",
+            f"-- Conflate v{VERSION} - SQL UPDATE statements",
             f"-- Source file : {os.path.basename(self.file_path)}",
             f"-- Generated   : {datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')}",
             f"-- Table       : {table}",
@@ -1739,7 +1739,7 @@ class DataMatchApp(ctk.CTk):
         # Show export options dialog
         opts = self._show_export_dialog(out_dir, stem, prefix)
         if not opts or opts.get("cancelled"):
-            # User cancelled — don't destroy, let them choose again or save+exit
+            # User cancelled - don't destroy, let them choose again or save+exit
             self.review_mode_active = True
             return
 
@@ -1784,7 +1784,7 @@ class DataMatchApp(ctk.CTk):
                 logging.info(f"Write-back saved: {wb_path}")
             except Exception as e:
                 logging.warning(f"Write-back failed: {e}")
-                files_saved.append("Write-back failed — see log for details")
+                files_saved.append("Write-back failed - see log for details")
 
         # --- SQL output ---
         if opts.get("sql"):
@@ -1817,7 +1817,7 @@ class DataMatchApp(ctk.CTk):
         summary += "\n\n".join(files_saved) if files_saved else "No outputs were generated."
 
         logging.info(
-            f"Session complete — approved={len(self.approved_merges)}, "
+            f"Session complete - approved={len(self.approved_merges)}, "
             f"flagged={len(self.flagged_merges)}, skipped={self.skipped_count}")
 
         messagebox.showinfo("Complete!", summary)
