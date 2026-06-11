@@ -40,12 +40,20 @@ A pizza shop's order system has the same customers entered several ways over tim
 
 Check both **Name** and **Address** as search columns, set `Cust_ID` as the unique ID, and run Dedupe Mode at 85%. Conflate combines the fields and surfaces the likely same-person duplicates for review:
 
+<img width="946" height="1093" alt="explorer_yZUO1LmRWR" src="https://github.com/user-attachments/assets/d899200f-361d-424d-abb2-abe02dde7f4c" />
+
+<img width="640" height="430" alt="Conflate_84Xygx5Kfk" src="https://github.com/user-attachments/assets/fc052373-9e9e-4a58-8c42-6a21bce70e24" />
+
+
 | Score | Item A | Item B |
 |-------|--------|--------|
 | 95% | Jonathan Meyer \| 1428 Elm Street, Apt 3B | Jon Meyer \| 1428 Elm St #3B |
 | 92% | Maria Gonzalez \| 76 Lakeview Dr | Maria Gonzales \| 76 Lake View Drive |
 
 Keep the cleaner record as canonical with `←`. The exported **Decisions** sheet is a join-ready audit trail, use `Primary_ID` / `Duplicate_ID` to VLOOKUP the merges back into your order data:
+
+<img width="952" height="1092" alt="Conflate_SoQoQd3U8N" src="https://github.com/user-attachments/assets/a0d7983f-a996-4192-b08b-d895557b7e33" />
+
 
 | Primary_ID | Duplicate_ID | Final Selection | Action | Score | Note |
 |------------|--------------|-----------------|--------|-------|------|
