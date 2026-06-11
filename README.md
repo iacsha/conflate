@@ -40,11 +40,11 @@ A pizza shop's order system has the same customers entered several ways over tim
 
 Load the file, check both **Name** and **Address** as search columns, set `Cust_ID` as the unique ID, and set Match Strictness to 85%:
 
-<img width="946" height="1093" alt="Conflate setup screen with the customer file loaded and the Name and Address columns selected" src="https://github.com/user-attachments/assets/d899200f-361d-424d-abb2-abe02dde7f4c" />
+<img width="946" height="1093" alt="Conflate setup screen with the customer file loaded and the Name and Address columns selected" src="docs/images/setup-screen.png" />
 
 After the scan, Conflate shows how the match scores are distributed so you can gauge data quality before reviewing:
 
-<img width="640" height="430" alt="Match Score Distribution histogram for the sample customer scan" src="https://github.com/user-attachments/assets/fc052373-9e9e-4a58-8c42-6a21bce70e24" />
+<img width="640" height="430" alt="Match Score Distribution histogram for the sample customer scan" src="docs/images/histogram.png" />
 
 It surfaces the likely same-person duplicates as candidate pairs:
 
@@ -55,7 +55,7 @@ It surfaces the likely same-person duplicates as candidate pairs:
 
 Step through each pair in the review screen and keep the cleaner record as canonical with `←`:
 
-<img width="952" height="1092" alt="Conflate review screen comparing two customer records side by side with decision buttons" src="https://github.com/user-attachments/assets/a0d7983f-a996-4192-b08b-d895557b7e33" />
+<img width="952" height="1092" alt="Conflate review screen comparing two customer records side by side with decision buttons" src="docs/images/review-screen.png" />
 
 The exported **Decisions** sheet is a join-ready audit trail, use `Primary_ID` / `Duplicate_ID` to VLOOKUP the merges back into your order data:
 
