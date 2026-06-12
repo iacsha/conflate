@@ -5,7 +5,7 @@ title Conflate Build
 
 echo.
 echo  =======================================
-echo    Conflate v1.0 -- EXE Build Script
+echo    Conflate v1.1 -- EXE Build Script
 echo  =======================================
 echo.
 echo  NOTE: Run this from plain CMD, not Anaconda Prompt.
@@ -81,26 +81,26 @@ echo [5/5] Packaging output...
 if "!BUILD_MODE!"=="single" (
     for %%I in ("dist\Conflate.exe") do set SIZE=%%~zI
     set /a SIZE_MB=!SIZE! / 1048576
-    powershell -Command "Compress-Archive -Path 'dist\Conflate.exe' -DestinationPath 'dist\Conflate_v1.0.zip' -Force"
+    powershell -Command "Compress-Archive -Path 'dist\Conflate.exe' -DestinationPath 'dist\Conflate_v1.1.zip' -Force"
     echo.
     echo  =======================================
     echo    BUILD SUCCESSFUL  (single-file)
     echo    EXE:  dist\Conflate.exe  (!SIZE_MB! MB)
-    echo    ZIP:  dist\Conflate_v1.0.zip
+    echo    ZIP:  dist\Conflate_v1.1.zip
     echo  =======================================
 )
 
 if "!BUILD_MODE!"=="folder" (
-    powershell -Command "Compress-Archive -Path 'dist\Conflate' -DestinationPath 'dist\Conflate_v1.0.zip' -Force"
+    powershell -Command "Compress-Archive -Path 'dist\Conflate' -DestinationPath 'dist\Conflate_v1.1.zip' -Force"
     echo.
     echo  =======================================
     echo    BUILD SUCCESSFUL  (folder mode)
-    echo    ZIP:  dist\Conflate_v1.0.zip
+    echo    ZIP:  dist\Conflate_v1.1.zip
     echo  =======================================
 )
 
 echo.
-echo  Ship dist\Conflate_v1.0.zip - users unzip and double-click Conflate.exe
+echo  Ship dist\Conflate_v1.1.zip - users unzip and double-click Conflate.exe
 echo.
 endlocal
 pause

@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## v1.1 (2026-06-12)
 
 ### Security
 - Output spreadsheets are hardened against formula (CSV) injection: any cell value starting with `=`, `+`, `-`, `@`, tab, or carriage return is prefixed with an apostrophe so it is treated as text. Applies to the Decisions, Flagged, Clusters, Raw-scan, and Write-back files.

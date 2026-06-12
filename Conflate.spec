@@ -1,4 +1,4 @@
-# Conflate v1.0 spec - sklearn pinned to 1.5.2, build from plain CMD not Anaconda Prompt
+# Conflate v1.1 spec - sklearn pinned to 1.5.2, build from plain CMD not Anaconda Prompt
 from PyInstaller.utils.hooks import collect_data_files
 
 block_cipher = None

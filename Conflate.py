@@ -1,5 +1,5 @@
 """
-Conflate v1.0
+Conflate v1.1
 Fuzzy-match deduplication and master mapping tool for Excel / CSV data.
 """
 
@@ -27,7 +27,7 @@ from logging.handlers import RotatingFileHandler
 # ===========================================================
 # VERSION & PATHS
 # ===========================================================
-VERSION      = "1.0"
+VERSION      = "1.1"
 APP_NAME     = "Conflate"
 APP_TITLE    = f"{APP_NAME} v{VERSION} - Data Deduplication & Master Mapper"
 SCRIPT_DIR   = os.path.dirname(os.path.abspath(__file__))
